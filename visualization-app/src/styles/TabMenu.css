@@ -1,0 +1,30 @@
+.tab-menu {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+  width: 70%;
+}
+
+.tab {
+  width: 18%;
+  cursor: pointer;
+  padding: 10px;
+  background-color: white;
+  border-color: antiquewhite;
+  border-radius: 3px;
+  border: 1px solid gray;
+}
+
+.tab:hover{
+  background-color: #DDD;
+}
+
+.tab:active{
+  background-color: #BBB;
+}
+
+.tab.active {
+  background-color: #ccf5ff;
+  border: 2px solid black;
+  font-weight: bold;
+}
