@@ -13,10 +13,20 @@
 }
 
 .cell {
-  background-color: gainsboro;
+  position: absolute;
   border: 1px solid black;
-  height: 50px;
-  width: 50px;
+  height: 30px;
+  width: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.aInput {
+  position: absolute;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .details {
@@ -27,4 +37,16 @@
   height: 100%;
   border-radius: 5px;
   box-shadow: 0px 10px 25px -10px rgba(0, 0, 0, 0.2);
+}
+
+.nInput{
+  margin-left: 10px;
+}
+
+.input-3des{
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  padding: 20px;  
 }
