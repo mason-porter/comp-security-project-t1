@@ -2,7 +2,7 @@ import React from "react";
 
 function VigenereMain(){
     return(
-        <div>Main Vigenere Component</div>
+        <div style={{padding: "20px"}}>Main Vigenere Component</div>
     );
 }
 

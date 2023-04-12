@@ -2,7 +2,7 @@ import React from "react";
 
 function OverviewMain(){
   return (
-    <div>
+    <div style={{padding: "20px"}}>
       <h3>This is a project to visualize different encyption/decryption methods</h3>
       <p>Project Members:</p>
       <ul>

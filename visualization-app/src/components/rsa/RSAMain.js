@@ -2,7 +2,7 @@ import React from "react";
 
 function RSAMain(){
     return(
-        <div>Main RSA Component</div>
+        <div style={{padding: "20px"}}>Main RSA Component</div>
     );
 }
 

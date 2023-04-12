@@ -2,7 +2,7 @@ import React from "react";
 
 function AESMain(){
     return(
-        <div>Main AES Component</div>
+        <div style={{padding: "20px"}}>Main AES Component</div>
     );
 }
 
