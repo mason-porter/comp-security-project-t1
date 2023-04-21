@@ -1,12 +1,4 @@
 .tab-content {
-  padding: 20px;
+  width: 100%;
+  height: 200px;
 }
-
-.tab-content div {
-  display: none;
-}
-
-.tab-content div:first-child {
-  display: block;
-}
-  
