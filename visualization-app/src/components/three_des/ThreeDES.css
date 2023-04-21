@@ -55,3 +55,40 @@
   padding-top: 8px;
   padding-bottom: 8px; 
 }
+
+.first-column {
+  width: 100px; /* Set the width to 100 pixels */
+}
+.tfn{
+  font-weight: normal;
+}
+.tfb{
+  font-weight: bold;
+}
+.tfcb{
+  color: blue;
+}
+.tfcr{
+  color: red;
+}
+.w17{
+  width: 16px;
+  text-align: center;
+}
+.w120{
+  text-align: center;
+  width: 110px;
+}
+.smaller-font{
+  font-size: 7px;
+}
+.small-font{
+  font-size: 12px;
+}
+.bb{
+  border-bottom: 1px solid #ccc;
+}
+.tfix{
+  table-layout:fixed;
+  border-collapse: collapse;
+}
