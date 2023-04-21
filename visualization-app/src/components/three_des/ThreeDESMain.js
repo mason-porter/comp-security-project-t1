@@ -1,9 +1,13 @@
 import React from "react";
+import FramerTest from "./Visual3DES";
+
+import "./ThreeDES.css";
+import Visual3DES from "./Visual3DES";
 
 function ThreeDESMain(){
-    return(
-        <div>Main 3DES Component</div>
-    );
+  return(
+    <Visual3DES />
+  );
 }
 
 export default ThreeDESMain;
