@@ -1,0 +1,137 @@
+/* Import Google font - Poppins */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+.rsa-algor * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+.rsa-algor .body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.rsa-algor .container {
+  position: relative;
+  max-width: 1250px;
+  width: 100%;
+  background-color: #fff;
+}
+
+.rsa-algor .container header {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.rsa-algor .container form {
+  position: relative;
+  min-height: 490px;
+}
+
+.rsa-algor .container form .details {
+  margin-top: 20px;
+}
+
+.rsa-algor .container form .title {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 6px 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.rsa-algor .container form .fields {
+  margin: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.rsa-algor form .fields .input-field {
+  display: flex;
+  width: calc(100% / 3 - 2px);
+  flex-direction: column;
+  margin: 4px 0;
+}
+
+.rsa-algor .input-field label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #2e2e2e;
+}
+
+.rsa-algor .input-field input {
+  outline: none;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #333;
+  padding: 0 15px;
+  height: 42px;
+  margin: 8px 0;
+}
+
+.rsa-algor .input-field input:is(:focus, :valid) {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.13);
+}
+
+.rsa-algor .container form button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 45px;
+  max-width: 200px;
+  width: 100%;
+  border: none;
+  outline: none;
+  color: #fff;
+  background-color: #4070f4;
+}
+
+.rsa-algor .container .button-grp {
+  display: flex;
+  margin-top: 20px;
+}
+
+.rsa-algor .container .btn-mv {
+  margin-right: 8px;
+}
+
+.rsa-algor .container .encryption_str {
+  margin-top: 25px;
+}
+
+.rsa-algor .container .encryption_str_b {
+  margin-top: 10px;
+}
+
+.rsa-algor .container .custom-select {
+  position: relative;
+  font-family: Arial;
+  border-radius: 5px;
+}
+
+.rsa-algor .container .custom-select {
+  -webkit-appearance: menulist-button;
+  height: 40px;
+}
+
+.rsa-algor .container .li {
+  margin-left: 50px;
+}
+
+.rsa-algor .container .errorText {
+  font-size: 14px;
+  margin-top: 12px;
+  color: red;
+}
