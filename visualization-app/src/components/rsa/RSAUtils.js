@@ -21,12 +21,12 @@ const is_number_prime = function (num) {
 };
 
 const generate_p_q_n = function () {
-  let p = (Math.floor(Math.random() * 300) + 100) | 1;
-  let q = (Math.floor(Math.random() * 300) + 100) | 1;
+  let p = (Math.floor(Math.random() * 700) + 300) | 1;
+  let q = (Math.floor(Math.random() * 700) + 300) | 1;
 
   while (!is_number_prime(p) || !is_number_prime(q) || p === q) {
-    p = (Math.floor(Math.random() * 300) + 100) | 1;
-    q = (Math.floor(Math.random() * 300) + 100) | 1;
+    p = (Math.floor(Math.random() * 700) + 300) | 1;
+    q = (Math.floor(Math.random() * 700) + 300) | 1;
   }
 
   const n = p * q;

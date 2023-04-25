@@ -706,7 +706,7 @@ class RSAMain extends Component {
 
                   {this.state.modeOfEncryption === 'ci' && (
                     <ul>
-                      {this.state.encrypted_plaintext_chars.map(
+                      {this.state.decrypted_plaintext_chars.map(
                         (enc_char, idx) => {
                           return (
                             <li className="li" key={idx}>
