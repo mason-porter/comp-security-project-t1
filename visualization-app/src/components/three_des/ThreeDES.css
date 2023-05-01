@@ -44,7 +44,10 @@
 .nInput{
   margin-left: 10px;
 }
-
+.hInput{
+  visibility: hidden;
+  width: 0;
+}
 .input-3des{
   border-bottom: 1px solid #ccc;
   display: flex;
@@ -58,6 +61,9 @@
 
 .first-column {
   width: 100px; /* Set the width to 100 pixels */
+}
+.wHex{
+  width: 300px;
 }
 .tfn{
   font-weight: normal;
@@ -79,6 +85,9 @@
   text-align: center;
   width: 110px;
 }
+.wFile{
+  width: 190px;
+}
 .smaller-font{
   font-size: 7px;
 }
@@ -91,4 +100,8 @@
 .tfix{
   table-layout:fixed;
   border-collapse: collapse;
+}
+.animslider{
+  margin: 0;
+  height: 22px;
 }

@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 
 function Visual3DES(){
   const cellSize = 34;
-  const durSpeed = 1;
+  const [durSpeed,setDurSpeed] = useState(1);
+  const [dSpeed,setDSpeed] = useState(5);
   const [animating,setAnimating] = useState(false);
   const [done,setDone] = useState(false);
   const [t1,setT1] = useState("");
@@ -14,17 +15,23 @@ function Visual3DES(){
   const [g2,setG2] = useState(0);
   const [t3,setT3] = useState("");
   const [t3Op,setT3Op] = useState(0.0);
+  const [tdes_result,set3DES]  = useState(Array(6).fill(""));
+  const [dwn,setDwn] = useState(false);
+  const [dtime,setDTime] = useState(-1.0);
+  const [hexInp,setHexInp] = useState("0000000000000000");
   //const [initKey,setInitKey] = useState("");
   const [kDisp,setKDisp] = useState(-50);
   const [desDisp,setDesDisp] = useState(0);
   const [desDisp2,setDesDisp2] = useState(0);
   const [desDisp16,setDesDisp16] = useState(0);
+  const [des3,set3desDisp] = useState(0);
   const [key, setKey] = useState(Array(17).fill(""));
   const [inpX, setInpX] = useState(Array.from({length: 8}, () => Array(8).fill(-1)));
   const [inpP, setInpP] = useState(Array.from({length: 8}, () => Array(8).fill(-1)));
   const [g1Move, setG1Move] = useState(Array.from({length: 8}, () => Array(8).fill(0)));
   const [perm_inp,setPermInp]=useState("");
   // DES step stages
+  const [k_enc,setKENC] = useState(true);
   const [s_l0, setSL0] = useState("");
   const [s_r0, setSR0] = useState("");
   const [s_el1,setEL1] = useState("");
@@ -33,7 +40,8 @@ function Visual3DES(){
   const [s_r1, setSR1] = useState("");
   const [s_ker,setKer] = useState("");
   const [s_pker,setPker]=useState("");
-  const [s_final,setSFinal]=useState(Array(16).fill(""));
+  const [s_int,setSInt]=useState(Array.from({length: 16}, () => Array(2).fill(" ")));
+  const [s_final,setSFinal] = useState("");
   const e48 = [32, 1, 2, 3, 4, 5, 4, 5, 6, 7, 8, 9, 8, 9, 10, 11, 12, 
                13, 12, 13, 14, 15, 16, 17, 16, 17, 18, 19, 20, 21, 20, 
                21, 22, 23, 24, 25, 24, 25, 26, 27, 28, 29, 28, 29, 30, 31, 32, 1];
@@ -49,6 +57,7 @@ function Visual3DES(){
   const r  = [];
   const ff = [];
   const sld = Array.from({length: 8}, () => Array(4).fill(0));
+  let kenc = true;
 
   const sp = [[[14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7],
               [ 0, 15,  7,  4, 14,  2, 13,  1, 10,  6, 12, 11,  9,  5,  3,  8],
@@ -167,7 +176,9 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
   }
 
   function choppedString(s,n){
-    if(n<=0 || s.length === 0) return "";
+    if(n<=0) return "";
+    if(s===undefined) return "";
+    if(s.length===0) return "";
     let ns = "";
     let i = 0;
     while(i + n < s.length){
@@ -271,11 +282,10 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
 
   function genLFR(keys){
     let first = inpIP;
-    console.log(first);
     l.push(first.slice(0,32));
     ff.push(" ");
     r.push(first.slice(32));
-    const newFinal = [...s_final];
+    const newFinal = [...s_int];
     for(let i = 1; i<=16; i++){
       l.push(r[i-1]);
       if(i===1){
@@ -283,24 +293,69 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
       }
       ff.push(f(l[i],keys[i],i));
       r.push(xor(l[i-1],ff[i]));
-      newFinal[i-1] = l[i]+r[i];
+      newFinal[i-1][0] = l[i];
+      newFinal[i-1][1] = r[i];
     }
-    setSFinal(newFinal);
+    setSInt(newFinal);
+    setSFinal(r[16]+l[16]);
     setSL0(l[0]);
     setSR0(r[0]);
     setSPR1(ff[1]);
     setSR1(r[1]);
   }
 
-  function wordToAscii(){
-    let textInput = document.getElementById("inp_plaintext");
-    let text = textInput.value;
-    let i = 0;
-    while(i<8){
-      const element = document.getElementById("n"+i);
-      element.value = (text[i]!==undefined) ? charToAscii(text[i]) : 0;
-      i += 1;
+  const handleDwnToggle = () => {
+    setDwn(!dwn);
+  };
+
+  function downloadFile(content,e=true){
+    let fileName = (e===true)? "encrypted-file.txt" : "decrypted-file.txt";
+    const blob = new Blob(["0x"+content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  function stringToHex(inp){
+    let res = "";
+    for(let i=0; i<inp.length; i++){
+      let c = inp.charCodeAt(i);
+      res += binaryToHex(decimalToBinary(c));
     }
+    return res;
+  }
+
+  function fileToHex(event){
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      const string = reader.result;
+      let res = (string.slice(0,2)==="0x")? string.slice(2) : stringToHex(string);
+      let ascii = binaryToAscii(hexToBinary(string));
+      setHexInp(res.padEnd(16,'0'));
+      document.getElementById("inp_plaintext").value = ascii;
+    };
+    reader.readAsBinaryString(file);
+  }
+
+  function wordToHex(x=0,inp=""){
+    let cinp = ""
+    if(x === 0){
+      cinp = document.getElementById("inp_plaintext").value;
+    }
+    else if(x === 1){
+      cinp = inp;
+    }
+    let ret = "";
+    for(let i=0;i<cinp.length;i++){
+      ret += binaryToHex(decimalToBinary(charToAscii(cinp[i])));
+    }
+    setHexInp(ret.padEnd(16,'0'));
   }
 
   function decimalToBinary(decimal,n=8) {
@@ -311,35 +366,77 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
     return binaryString;
   }
 
-  function hexToBinary(hex){
+  function hexToBinary(hex,n=16){
     let bin = "";
     const htb = ["0000","0001","0010","0011","0100","0101","0110","0111",
                  "1000","1001","1010","1011","1100","1101","1110","1111"];
-    for(let i=0;i<16;i++){
+    for(let i=0;i<n;i++){
       let a = parseInt(hex.charAt(i),16);
       bin = bin + htb[a];
     }
     return bin;
   }
 
-  function visualEncrypt(){
+  function binaryToAscii(bin){ 
+    if(bin==undefined) return "";
+    var str = '';
+    for (var n = 0; n < bin.length; n += 8) {
+      str += String.fromCharCode(parseInt(bin.substr(n, 8), 2));
+    }
+    return str;
+  }
+
+  function handleAnimSpeed(event){
+    setDSpeed(event.target.value);
+    setDurSpeed(5/event.target.value);
+  }
+
+  function binaryToHex(bin){
+    if(bin === undefined) return "";
+    if(bin.length === 0 || bin.length % 4 !== 0) return;
+    let ret = "";
+    const n = bin.length/4;
+    const bth = ["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"];
+    for(let i=0;i<n;i++){
+      let bin_slice = parseInt(bin.slice(i*4,(i+1)*4),2);
+      ret += bth[bin_slice];
+    }
+    return ret;
+  }
+
+  function visual3DES(enc=true){
+    kenc = enc;
     const k1 = document.getElementById("k1").value;
     const k2 = document.getElementById("k2").value;
     const k3 = document.getElementById("k3").value;
     if(!isValidHex(k1) || !isValidHex(k2) || !isValidHex(k3)) return;
-    if(animating === true || done === true){
-      reset(99);
-      setTimeout(() => {
-        animateIP();
-      }, durSpeed * 2000);
+    let res = "";
+    if(dwn===false){
+      setDTime(-1.0);
+      if(animating === true || done === true){
+        reset(99);
+        setTimeout(() => {
+          animateIP();
+        }, durSpeed * 2000);
+      }
+      else{
+        setTimeout(() => {
+          animateIP();
+        }, durSpeed * 50);
+      }
     }
     else{
-      animateIP();
+      let startTime = performance.now();
+      res = quick_full_3des(hexInp,enc);
+      let endTime = performance.now();
+      let diff = (endTime - startTime) / 1000;
+      downloadFile(res,enc);
+      setDTime(diff);
     }
   }
 
   function animateIP(){
-    quick_des_begin();
+    quick_3des_begin(kenc);
     setAnimating(true);
     setDone(false);
     getInpX();
@@ -352,7 +449,7 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
         getG1Move(1);
         setTimeout(() => {
           animateKeyPerm1();
-        }, durSpeed * 4000);
+        }, durSpeed * 7000);
       }, durSpeed * 2000);
     }, durSpeed * 2000);
   }
@@ -365,7 +462,7 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
       reset(3)
       setTimeout(() => {
         getKeys(1);
-        showKeys16(true);
+        showKeys16(kenc);
         setTimeout(() => {
           setT2("Key Permutation Matrix PC1");
           setG2(3); 
@@ -376,7 +473,7 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
             setT3Op(1.0);
             setTimeout(() => {
               animateKeyPerm2();
-            }, durSpeed * 3000);
+            }, durSpeed * 6000);
           }, durSpeed * 2000);
         }, durSpeed * 2000);
       }, durSpeed * 2000);
@@ -399,11 +496,11 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
           setTimeout(() => {
             setG1(5);
             setT3Op(1.0);
-            setT3("Permutated Subkey (K[1])");
+            setT3((kenc===true)? "Permutated Subkey (K[1])" : "Permutated Subkey (K[16])");
             getG1Move(4);
             setTimeout(() => {
               animateKey16();
-            }, durSpeed * 4000);
+            }, durSpeed * 7500);
           }, durSpeed * 2000);
         }, durSpeed * 2000);
       }, durSpeed * 2000);
@@ -431,12 +528,12 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
           setTimeout(() => {
             setDesDisp2(0);
             setTimeout(() => {
-              des_disp_anim16(0,160);
+              des_disp_anim16(0,200);
               setTimeout(() => {
                 animate_final_ip();
-              }, durSpeed * 14000);
+              }, durSpeed * 20000);
             }, durSpeed * 2000);
-          }, durSpeed * 35000);
+          }, durSpeed * 40000);
         }, durSpeed * 2000);
       }, durSpeed * 42000);
     }, durSpeed * 2000);
@@ -454,8 +551,23 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
           setT3Op(1.0);
           setT3("Final Result");
           getG1Move(5);
-        }, durSpeed * 5000)
+          setTimeout(() => {
+            animate_triple_des();
+          }, durSpeed * 8000);
+        }, durSpeed * 3000);
       }, durSpeed * 2000); 
+    }, durSpeed * 2000); 
+  }
+
+  function animate_triple_des(){
+    reset(7);
+    setTimeout(() => {
+      tdes_anim(0,200);
+      resG1Move();
+      setTimeout(() => {
+        setAnimating(false);
+        setDone(true);
+      }, durSpeed * 18000);
     }, durSpeed * 2000); 
   }
 
@@ -489,6 +601,14 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
       setDesDisp2(0);
       setDesDisp16(0);
     }
+    if(x===7){
+      setT3Op(0);
+      setG1(0);
+      setG2(0);
+      setDesDisp(0);
+      setDesDisp2(0);
+      setDesDisp16(0);
+    }
     if(x === 99){
       setG1(-1);
       resG1Move();
@@ -500,6 +620,7 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
       setDesDisp(0);
       setT1("");
       resInpX();
+      set3desDisp(0);
     }
   }
 
@@ -527,12 +648,10 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
 
   function getInpX(){ // Get initial Input
     const newInpX = [...inpX];
+    let inp = hexToBinary(hexInp);
     for(let i = 0; i<8; i++){
-      let val = parseInt(document.getElementById("n"+i).value);
-      val = (val > 255)? 255 : (val < 0)? 0 : val;
-      const bText = decimalToBinary(val);
       for(let j = 0; j<8; j++){
-        newInpX[i][j] = parseInt(bText[j]);
+        newInpX[i][j] = parseInt(inp[i*8+j]);
       }
     }
     setT1("Input Block (64-bits)");
@@ -590,7 +709,7 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
     else if (g1 === 3)  return inpP[i][j];
     else if (g1 === 4)  return (j%8===7)? -1 : key[0][i*7+j];
     else if (g1 === 5)  return (j%8===7)? -1 : key[0][i*7+j];
-    else if (g1 === 6)  return s_final[15][i*8+j] ?? "";
+    else if (g1 === 6)  return s_final[i*8+j] ?? "";
     return "";
   }
 
@@ -774,6 +893,15 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
     }
   }
 
+  function tdes_anim(x,l){
+    set3desDisp(x);
+    if(x < l){
+      setTimeout(()=>{
+        tdes_anim(x+1,l);
+      }, 80 * durSpeed);
+    }
+  }
+
   function key_disp_anim(x){
     setKDisp(x);
     if(x < 16){
@@ -852,7 +980,7 @@ const lsh_1 = [[27,  0,  1,  2,  3,  4,  5],
         newKeys[i] = perm_pc2(nextKey);
       }
       else{
-        newKeys[i] = perm_pc2(nextKey);
+        newKeys[17-i] = perm_pc2(nextKey);
       }
     }
     //console.log(newKeys);
@@ -878,13 +1006,14 @@ function quick_des(plain,key,encrypt=true){
   const ql = [inp_ip.slice(0,32)];
   const qf = [" "];
   const qr = [inp_ip.slice(32)];
-  const qk = quick_generate_keys(key)
+  let qk = quick_generate_keys(key)
   if(encrypt===false){ qk = qk.reverse(); }
   for(let i=1; i<=16; i++){
     ql.push(qr[i-1]);
     qf.push( quick_f(ql[i],qk[i-1]) );
     qr.push( quick_xor(ql[i-1],qf[i]));
-    console.log("Step "+i+": "+choppedString((ql[i]+qr[i]),8));
+    // console.log("K"+i+": "+choppedString(qk[i-1],6))
+    // console.log("Step "+i+": "+choppedString((ql[i]+qr[i]),8));
   }
   return quick_ip_inv(qr[16]+ql[16]);
 }
@@ -905,7 +1034,7 @@ function quick_ip_inv(inp){
   const ori = [39,7,47,15,55,23,63,31];
   for(let i=0; i<8; i++){
     for(let j=0; j<8; j++){
-      ret += inp[ori[i]-j];
+      ret += inp[ori[j]-i];
     }
   }
   return ret;
@@ -1012,35 +1141,78 @@ function quick_generate_keys(key){
   return roundKeys;
 }
 
-function quick_des_begin(x=1){
-  let plain = "";
-  let key = hexToBinary(document.getElementById("k"+x).value);
-  for(let i=0; i<8; i++){
-    let val = parseInt(document.getElementById("n"+i).value);
-    val = (val > 255)? 255 : (val < 0)? 0 : val;
-    plain += decimalToBinary(val,8);
+function quick_full_3des(inp,enc=true){
+  let key1 = hexToBinary(document.getElementById("k"+1).value);
+  let key2 = hexToBinary(document.getElementById("k"+2).value);
+  let key3 = hexToBinary(document.getElementById("k"+3).value);
+  const encoder = new TextEncoder(); // create a new TextEncoder object
+  const prepared_inp = hexToBinary(inp,inp.length);
+  let ret = "";
+  if(enc===true){
+    for(let i=0;i<prepared_inp.length;i+=64){
+      let minp = prepared_inp.slice(i,i+64).padEnd(64,' ');
+      let int1 = quick_des(minp,key1,true);
+      let int2 = quick_des(int1,key2,false);
+      let final = quick_des(int2,key3,true);
+      ret += final;
+    }
   }
-  let result = quick_des(plain,key,true);
-  console.log("PLAIN:  "+choppedString(plain,8));
-  console.log("KEY:    "+choppedString(key,8));
-  console.log("RESULT: "+choppedString(result,8));
+  else{
+    for(let i=0;i<prepared_inp.length;i+=64){
+      let minp = prepared_inp.slice(i,i+64).padEnd(64,' ');
+      let int1 = quick_des(minp,key3,false);
+      let int2 = quick_des(int1,key2,true);
+      let final = quick_des(int2,key1,false);
+      ret += final;
+    }
+  }
+  console.log(inp);
+  console.log(inp.length);
+  console.log(choppedString(prepared_inp,8));
+  console.log(prepared_inp.length);
+  console.log(choppedString(ret,8));
+  console.log(ret.length);
+  return binaryToHex(ret);
+}
+
+function quick_3des_begin(enc=true){
+  let key1 = hexToBinary(document.getElementById("k"+1).value);
+  let key2 = hexToBinary(document.getElementById("k"+2).value);
+  let key3 = hexToBinary(document.getElementById("k"+3).value);
+  let inp = hexToBinary(hexInp.slice(0,16));
+  let int1 = quick_des(inp,key1,enc);
+  let int2 = quick_des(int1,key2,!enc);
+  let final = quick_des(int2,key3,enc);
+  let int3 = quick_des(final,key3,!enc);
+  let int4 = quick_des(int3,key2, enc);
+  let rfinal= quick_des(int4,key1,!enc);
+  /*
+  console.log(binaryToHex(int1));
+  console.log(binaryToHex(int2));
+  console.log(binaryToHex(final));
+  console.log(binaryToHex(int3));
+  console.log(binaryToHex(int4));
+  console.log(binaryToHex(rfinal));
+  */
+  set3DES([int1,int2,final,int3,int4,rfinal]);
+  // console.log("PLAIN:   "+choppedString(plain,4));
+  // console.log("KEY:     "+choppedString(key,4));
+  // console.log("RESULT:  "+choppedString(result,4));
 }
 
   return (
     <div>
       <div className="input-3des">
         <label htmlFor="inp_plaintext">Enter Plaintext:</label>
-        <input className="nInput" type="text" id="inp_plaintext" name="inp_plaintext" placeholder="Max 8 Characters" maxLength="8"></input>
-        <button className="nInput" onClick={() => wordToAscii()}>To ASCII</button>
-        <input className="nInput" type="number" id="n0" name="num0" min="0" max="255" defaultValue={0}/>
-        <input className="nInput" type="number" id="n1" name="num1" min="0" max="255" defaultValue={0}/>
-        <input className="nInput" type="number" id="n2" name="num2" min="0" max="255" defaultValue={0}/>
-        <input className="nInput" type="number" id="n3" name="num3" min="0" max="255" defaultValue={0}/>
-        <input className="nInput" type="number" id="n4" name="num4" min="0" max="255" defaultValue={0}/>
-        <input className="nInput" type="number" id="n5" name="num5" min="0" max="255" defaultValue={0}/>
-        <input className="nInput" type="number" id="n6" name="num6" min="0" max="255" defaultValue={0}/>
-        <input className="nInput" type="number" id="n7" name="num7" min="0" max="255" defaultValue={0}/>
-        <button className="nInput" onClick={() => visualEncrypt()}>Encrypt</button>
+        <input className="nInput" type="text" id="inp_plaintext" name="inp_plaintext" placeholder="Input text" onChange={() => wordToHex(0)}></input>
+        <input className="nInput wFile" type="file" id="inp_file" onChange={fileToHex} />
+        <div className="nInput wHex">Hex: {hexInp.length > 16? hexInp.slice(0,16)+"... ("+hexInp.length/2+")" : hexInp}</div>
+        <button className="nInput" disabled={animating} onClick={() => setKENC(true,visual3DES(true))}>Encrypt</button>
+        <button className="nInput" disabled={animating} onClick={() => setKENC(false,visual3DES(false))}>Decrypt</button>
+        <label className="nInput">
+          <input type="checkbox" checked={dwn} onChange={handleDwnToggle} />
+          Download Result
+        </label>
       </div>
       <div className="input-3des">
         <label >Enter Keys (in Hex):</label>
@@ -1048,6 +1220,8 @@ function quick_des_begin(x=1){
         <input className="nInput" type="text" id="k2" name="k2" maxLength="16" placeholder="K2 (16 Characters)" defaultValue={""}/>
         <input className="nInput" type="text" id="k3" name="k3" maxLength="16" placeholder="K3 (16 Characters)" defaultValue={""}/>
         <button className="nInput" onClick={() => randomKeys()}>Randomize</button>
+        <p className="animslider" style={{marginLeft:"10px",marginRight:"10px"}}>Animation Speed: </p>
+        <input disabled={animating} className="animslider" type="range" min="1" max="10" value={dSpeed} onChange={handleAnimSpeed} />
       </div>
       <div>
         {inpX.map((row, i) => (
@@ -1111,7 +1285,7 @@ function quick_des_begin(x=1){
         animate={{ opacity: (kDisp >= -45)? 1.0 : 0.0}}
         transition={{ type: "tween", duration: durSpeed * 1.5}}
         id={"K_info_Text"}
-        ><div className="ab"><p>We will repeat these steps for subkeys 2 through 16, using left shifts and the PC2 Matrix:</p></div>
+        ><div className="ab"><p>We will repeat these steps for subkeys {(k_enc===true)? "2 through 16" : "15 through 1 (roundkeys reversed in decryption)"}, using left shifts and the PC2 Matrix:</p></div>
       </motion.div>
         <motion.div
         initial={{ opacity: (kDisp >= -25)? 1.0 : 0.0,
@@ -1143,12 +1317,12 @@ function quick_des_begin(x=1){
             animate={{ opacity: (kDisp >= (i+1))? 1.0 : 0.0}}
             transition={{ type: "tween", duration: durSpeed * 1.5}}
             id={"KTextN{"+i+"}"}
-            ><div className="ab"><strong>Subkey {i+1}:{`\t\t`}</strong></div>
+            ><div className="ab"><strong>Roundkey {i+1}:{`\t\t`}</strong></div>
           </motion.div>
             <motion.div
               key={"K_text_"+(i+1)}
               initial={{ opacity: (kDisp >= (i+1))? 1.0 : 0.0,
-                         x: 120, 
+                         x: 150, 
                          y: 70 + 20 * (i),}}
               animate={{ opacity: (kDisp >= (i+1))? 1.0 : 0.0}}
               transition={{ type: "tween", duration: durSpeed * 1.5}}
@@ -1202,7 +1376,7 @@ function quick_des_begin(x=1){
           animate={{ opacity: (desDisp >= 60)? 1.0 : 0.0}}
           transition={{ type: "tween", duration: durSpeed * 1.5}}
           id={"DES_info_TextL1"}
-          ><div className="ab"><p>L1 = R0 ={`        `}<strong>{choppedString(s_r0,8)}</strong></p></div>
+          ><div className="ab"><p>L1 = R0 ={`        `}<strong>{choppedString(s_r0,4)}</strong></p></div>
         </motion.div>
         <motion.div
           initial={{ opacity: (desDisp >= 80)? 1.0 : 0.0,
@@ -1467,16 +1641,331 @@ function quick_des_begin(x=1){
           ><div className="ab"><p>We will repeat those steps for 16 full rounds:</p></div>
         </motion.div>
         {mapper16.map((col, idx) => (
+          <div>
+            <motion.div
+            initial={{ opacity: (desDisp16 >= 8*(idx+1))? 1.0 : 0.0,
+                      x: 20, 
+                      y: 25+20*idx }}
+            animate={{ opacity: (desDisp16>= 8*(idx+1))? 1.0 : 0.0}}
+            transition={{ type: "tween", duration: durSpeed * 1.5}}
+            id={"DES_info_Text16-"+idx}
+            >
+              <div className={(idx===15)?"ab tfb" : "ab"}>
+                <p><strong>L{idx+1}: </strong>{choppedString(s_int[idx][0],4)}</p>
+              </div>
+          </motion.div>
           <motion.div
           initial={{ opacity: (desDisp16 >= 8*(idx+1))? 1.0 : 0.0,
-                    x: 20, 
+                    x: 420, 
                     y: 25+20*idx }}
           animate={{ opacity: (desDisp16>= 8*(idx+1))? 1.0 : 0.0}}
           transition={{ type: "tween", duration: durSpeed * 1.5}}
           id={"DES_info_Text16-"+idx}
-          ><div className={(idx===15)?"ab tfb" : "ab"}><p><strong>Step {idx+1}: </strong>{choppedString(s_final[idx],8)}</p></div>
-        </motion.div>
+          >
+            <div className={(idx===15)?"ab tfb" : "ab"}>
+              <p><strong>R{idx+1}: </strong>{choppedString(s_int[idx][1],4)}</p>
+            </div>
+          </motion.div>
+        </div>
         ))}
+        <motion.div
+          initial={{ opacity: (desDisp16 >= 150)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 350 }}
+          animate={{ opacity: (desDisp16>= 150)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text100"}
+          >
+            <div className="ab">
+              <p>The string we take to the final permutation is R[16]+L[16]:</p>
+            </div>
+          </motion.div>
+          <motion.div
+          initial={{ opacity: (desDisp16 >= 170)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 370 }}
+          animate={{ opacity: (desDisp16>= 170)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text200"}
+          >
+            <div className="ab">
+              <p><strong>{choppedString(s_int[15][1]+s_int[15][0],4)}</strong></p>
+            </div>
+          </motion.div>
+      </div>
+      <div className={(kenc===true)? "" : "hInput"}>
+        <motion.div
+          initial={{ opacity: (des3 >= 1)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 0 }}
+          animate={{ opacity: (des3>= 1)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>This is only one iteration of DES:</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 20)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 25 }}
+          animate={{ opacity: (des3>= 20)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>E<sub>K1</sub>(text): {binaryToHex(tdes_result[0])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 20)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 25 }}
+          animate={{ opacity: (des3>= 20)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: {binaryToAscii(tdes_result[0])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 50)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 60 }}
+          animate={{ opacity: (des3>= 1)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>We still need to peform operations using the other 2 keys:</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 70)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 85 }}
+          animate={{ opacity: (des3>= 70)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>D<sub>K2</sub>(E<sub>K1</sub>(text)): {binaryToHex(tdes_result[1])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 70)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 85 }}
+          animate={{ opacity: (des3>= 70)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: {binaryToAscii(tdes_result[1])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 85)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 105 }}
+          animate={{ opacity: (des3>= 85)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>E<sub>K3</sub>(D<sub>K2</sub>(E<sub>K1</sub>(text))): {binaryToHex(tdes_result[2])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 85)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 105 }}
+          animate={{ opacity: (des3>= 85)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: <strong>{binaryToAscii(tdes_result[2])}</strong></p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 110)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 130 }}
+          animate={{ opacity: (des3>= 110)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>Now to decrypt it back to check for validity:</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 130)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 155 }}
+          animate={{ opacity: (des3>= 130)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>D<sub>K3</sub>(ciph): {binaryToHex(tdes_result[3])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 130)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 155 }}
+          animate={{ opacity: (des3>= 130)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: {binaryToAscii(tdes_result[3])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 145)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 175 }}
+          animate={{ opacity: (des3>= 145)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>E<sub>K2</sub>(D<sub>K3</sub>(ciph)): {binaryToHex(tdes_result[4])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 145)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 175 }}
+          animate={{ opacity: (des3>= 145)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: {binaryToAscii(tdes_result[4])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 160)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 195 }}
+          animate={{ opacity: (des3>= 160)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>D<sub>K1</sub>(E<sub>K2</sub>(D<sub>K3</sub>(ciph))): {binaryToHex(tdes_result[5])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 160)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 195 }}
+          animate={{ opacity: (des3>= 160)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: <strong>{binaryToAscii(tdes_result[5])}</strong></p></div>
+        </motion.div>
+      </div>
+      <div className={(kenc===false)? "" : "hInput"}>
+        <motion.div
+          initial={{ opacity: (des3 >= 1)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 0 }}
+          animate={{ opacity: (des3>= 1)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>This is only one iteration of DES:</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 20)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 25 }}
+          animate={{ opacity: (des3>= 20)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>D<sub>K3</sub>(text): {binaryToHex(tdes_result[0])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 20)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 25 }}
+          animate={{ opacity: (des3>= 20)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: {binaryToAscii(tdes_result[0])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 50)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 60 }}
+          animate={{ opacity: (des3>= 1)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>We still need to peform operations using the other 2 keys:</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 70)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 85 }}
+          animate={{ opacity: (des3>= 70)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>E<sub>K2</sub>(D<sub>K3</sub>(text)): {binaryToHex(tdes_result[1])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 70)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 85 }}
+          animate={{ opacity: (des3>= 70)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: {binaryToAscii(tdes_result[1])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 85)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 105 }}
+          animate={{ opacity: (des3>= 85)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>D<sub>K1</sub>(E<sub>K2</sub>(D<sub>K3</sub>(text))): {binaryToHex(tdes_result[2])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 85)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 105 }}
+          animate={{ opacity: (des3>= 85)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: <strong>{binaryToAscii(tdes_result[2])}</strong></p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 110)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 130 }}
+          animate={{ opacity: (des3>= 110)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>Now to encrypt it back to check for validity:</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 130)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 155 }}
+          animate={{ opacity: (des3>= 130)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>E<sub>K1</sub>(ciph): {binaryToHex(tdes_result[3])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 130)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 155 }}
+          animate={{ opacity: (des3>= 130)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: {binaryToAscii(tdes_result[3])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 145)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 175 }}
+          animate={{ opacity: (des3>= 145)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>D<sub>K2</sub>(E<sub>K1</sub>(ciph)): {binaryToHex(tdes_result[4])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 145)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 175 }}
+          animate={{ opacity: (des3>= 145)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: {binaryToAscii(tdes_result[4])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 160)? 1.0 : 0.0,
+                    x: 20, 
+                    y: 195 }}
+          animate={{ opacity: (des3>= 160)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>E<sub>K3</sub>(D<sub>K2</sub>(E<sub>K1</sub>(ciph))): {binaryToHex(tdes_result[5])}</p></div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: (des3 >= 160)? 1.0 : 0.0,
+                    x: 400, 
+                    y: 195 }}
+          animate={{ opacity: (des3>= 160)? 1.0 : 0.0}}
+          transition={{ type: "tween", duration: durSpeed * 1.5}}
+          id={"DES_info_Text10"}
+          ><div className="ab"><p>ASCII: <strong>{binaryToAscii(tdes_result[5])}</strong></p></div>
+        </motion.div>
       </div>
       <div>
         <motion.div
@@ -1499,8 +1988,15 @@ function quick_des_begin(x=1){
         </motion.div>
       </div>
       <div style={{padding: "20px", opacity:(done === false && animating === false)? 1 : 0}}>
-        <h3>Enter your input (or adjust the 8 number values) to begin.</h3>
-        <p>3DES/DES encrypts data in 64-bit "blocks." For the visualization, we will only encrypt one block.</p>      
+        <h3>Enter your input to begin.</h3>
+        <p>3DES/DES encrypts data in 64-bit "blocks." For the visualization, we will only encrypt one block.</p>  
+        <p>To skip the animation and download the resulting plain/cipher, toggle the "Download Result" option.</p>  
+        <p>Note that the downloaded result WILL include the full length of the input, and the resulting file will contain as a hex value.</p> 
+        <hr/>
+        <h4>To upload a file as input:</h4>   
+        <p>Click the "Choose File" button and select your desired file.</p> 
+        <p>If successful, the Hex and Plaintext fields should update, and you are ready to encrypt/decrypt!</p>
+        <p className="tfcb">{(dtime!==-1.0)? "Done! 3DES took "+dtime+" seconds." : ""}</p>
       </div>
     </div>
   )
