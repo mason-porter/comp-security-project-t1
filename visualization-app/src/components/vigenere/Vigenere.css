@@ -1,0 +1,141 @@
+/* Import Google font - Poppins */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+.vigenere-algor * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+.vigenere-algor .body {
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.vigenere-algor .container {
+  position: relative;
+  max-width: 1250px;
+  width: 100%;
+  background-color: #fff;
+}
+
+.vigenere-algor .container header {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.vigenere-algor .container form {
+  position: relative;
+  min-height: 490px;
+}
+
+.vigenere-algor .container form .details {
+  margin-top: 20px;
+}
+
+.vigenere-algor .container form .title {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 6px 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.vigenere-algor .container form .fields {
+  margin: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.vigenere-algor .container .displayer {
+  margin-top: 50px !important;
+}
+
+.vigenere-algor form .fields .input-field {
+  display: flex;
+  width: calc(100% / 3 - 2px);
+  flex-direction: column;
+  margin: 4px 0;
+}
+
+.vigenere-algor .input-field label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #2e2e2e;
+}
+
+.vigenere-algor .input-field input {
+  outline: none;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #333;
+  padding: 0 15px;
+  height: 42px;
+  margin: 8px 0;
+}
+
+.vigenere-algor .input-field input:is(:focus, :valid) {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.13);
+}
+
+.vigenere-algor .container form button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 45px;
+  max-width: 200px;
+  width: 100%;
+  border: none;
+  outline: none;
+  color: #fff;
+  background-color: #4070f4;
+}
+
+.vigenere-algor .container .button-grp {
+  display: flex;
+  margin-top: 20px;
+}
+
+.vigenere-algor .container .btn-mv {
+  margin-right: 8px;
+}
+
+.vigenere-algor .container .encryption_str {
+  margin-top: 25px;
+}
+
+.vigenere-algor .container .encryption_str_b {
+  margin-top: 10px;
+}
+
+.vigenere-algor .container .li {
+  margin-left: 50px;
+}
+
+.vigenere-algor .container .errorText {
+  font-size: 14px;
+  margin-top: 12px;
+  color: red;
+}
+
+.vigenere-algor .display-container {
+  margin: 0 auto;
+  margin-bottom: 20px;
+}
+
+.vigenere-algor .displayertitle {
+  text-align: center;
+  font-weight: 600;
+  margin-top: 30px;
+  color: rgb(13, 0, 255);
+}
